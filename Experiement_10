@@ -1,0 +1,91 @@
+#include <stdio.h>
+#define SIZE 8
+typedef struct {
+char data[SIZE];
+int front, rear, count;
+} Buffer;
+typedef struct {
+Buffer tx, rx;
+int baudRate;
+} UART;
+void init_buffer(Buffer *b) {
+b->front = b->rear = b->count = 0;
+}
+int is_buffer_empty(Buffer *b) {
+return b->count == 0;
+}
+int is_buffer_full(Buffer *b) {
+return b->count == SIZE;
+}
+int enqueue(Buffer *b, char ch) {
+if (is_buffer_full(b)) return 0;
+b->data[b->rear] = ch;
+b->rear = (b->rear + 1) % SIZE;
+b->count++;
+return 1;
+}
+int dequeue(Buffer *b, char *ch) {
+if (is_buffer_empty(b)) return 0;
+*ch=b->data[b->front];
+b->front = (b->front + 1) % SIZE;
+b->count--;
+return 1;
+}
+void uart_init(UART *u) {
+init_buffer(&u->tx);
+init_buffer(&u->rx);
+u->baudRate = 9600;
+printf("UART initialized: %d baud, 8-N-1\n", u->baudRate);
+}
+int uart_send(UART *u, char ch) {
+return enqueue(&u->tx, ch);
+}
+int uart_receive(UART *u, char *ch) {
+return dequeue(&u->rx, ch);
+}
+void uart_transmit(UART *u) {
+char ch;
+printf("Transmitted: ");
+while (dequeue(&u->tx, &ch))
+putchar(ch);
+printf("\n");
+}
+void uart_rx_interrupt(UART *u, char ch) {
+if (!enqueue(&u->rx, ch))
+printf("RX buffer full; '%c' lost.\n", ch);
+}
+int main(void) {
+UART uart;
+char input[100], ch;
+int choice, i;
+uart_init(&uart);
+do {
+printf("\n1.Transmit 2. Receive 3.Exit\nChoice: ");
+if (scanf("%d", &choice) != 1) return 1;
+getchar();
+if (choice == 1) {
+printf("Enter data: ");
+if (!fgets(input, sizeof(input), stdin)) return 1;
+for (i = 0; input[i] && input[i] != '\n'; i++) {
+if (!uart_send(&uart, input[i])) {
+uart_transmit(&uart);
+uart_send(&uart, input[i]);
+}
+}
+if (!is_buffer_empty(&uart.tx))
+uart_transmit(&uart);
+} else if (choice == 2) {
+printf("Enter incoming data: ");
+if (!fgets(input, sizeof(input), stdin)) return 1;
+for (i = 0; input[i] && input[i] != '\n'; i++)
+uart_rx_interrupt(&uart, input[i]);
+printf("Received: ");
+while (uart_receive(&uart, &ch))
+putchar(ch);
+printf("\n");
+} else if (choice != 3) {
+printf("Invalid choice.\n");
+}
+} while (choice != 3);
+return 0;
+}
