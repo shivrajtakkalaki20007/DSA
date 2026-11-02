@@ -1,0 +1,73 @@
+#include <stdio.h>
+#include <stdlib.h>
+struct Node {
+int data;
+struct Node* next;
+};
+struct Node* top = NULL;
+void insert(int item) {
+struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
+if (newNode == NULL) {
+printf("Stack Overflow (Heap Memory Full)\n");
+return;
+}
+newNode->data = item;
+newNode->next = top;
+top = newNode;
+printf("Successfully inserted %d into the stack.\n", item);
+}
+void delete() {
+if (top == NULL) {
+printf("Stack Underflow! The stack is empty.\n");
+return;
+}
+struct Node* temp = top;
+int deletedItem = temp->data;
+top = top->next;
+free(temp);
+printf("Successfully deleted %d from the stack.\n", deletedItem);
+}
+void display() {
+if (top == NULL) {
+printf("Stack is empty. Nothing to display.\n");
+return;
+}
+struct Node* temp = top;
+printf("Stack elements (Top -> Bottom): ");
+while (temp != NULL) {
+printf("%d -> ", temp->data);
+temp = temp->next;
+}
+printf("NULL\n");
+}
+int main() {
+int choice, item;
+while (1) {
+printf("\n--- STACK OPERATIONS MENU ---\n");
+printf("1. INSERT (Push)\n");
+printf("2. DELETE (Pop)\n");
+printf("3. DISPLAY\n");
+printf("4. EXIT\n");
+printf("Enter your choice: ");
+scanf("%d", &choice);
+switch (choice) {
+case 1:
+printf("Enter the element to insert: ");
+scanf("%d", &item);
+insert(item);
+break;
+case 2:
+delete();
+break;
+case 3:
+display();
+break;
+case 4:
+printf("Exiting program...\n");
+exit(0);
+default:
+printf("Invalid choice! Please select an option between 1 and 4.\n");
+}
+}
+return 0;
+}
